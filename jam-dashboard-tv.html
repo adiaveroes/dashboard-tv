@@ -5,77 +5,79 @@
 <title>Jam Dashboard TV</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
-
+ 
   :root{
-    --bg: #0b0e14;
-    --panel: #11151f;
-    --accent: #f2a93b;
-    --accent-dim: #8a6221;
-    --text: #eef1f6;
-    --muted: #7c8496;
+    --bg: #ffffff;
+    --panel: #f7f8fa;
+    --accent: #e8720c;      /* senada dengan warna oranye REALISASI di chart */
+    --navy: #1f2a44;        /* senada dengan header tabel gelap di dashboard */
+    --text: #1f2a44;
+    --muted: #8a93a6;
+    --border: #e4e7ee;
   }
-
+ 
   html, body{
     margin:0; padding:0; height:100%;
-    background: var(--bg);
+    background: transparent;
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
     font-family:'Space Grotesk', sans-serif;
   }
-
+ 
   .clock-wrap{
     display:flex; flex-direction:column; align-items:center; gap:6px;
-    padding: 14px 40px;
-    border-radius: 14px;
-    background: linear-gradient(180deg, var(--panel), #0d1119);
-    border: 1px solid #1c2230;
+    padding: 12px 36px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(31,42,68,0.06);
   }
-
+ 
   .time-row{
     display:flex; align-items:baseline; gap:10px;
   }
-
+ 
   .time{
     font-family:'IBM Plex Mono', monospace;
-    font-weight:600;
-    font-size: 8vw;
+    font-weight:700;
+    font-size: 7vw;
     line-height:1;
-    color: var(--text);
-    letter-spacing: 2px;
+    color: var(--navy);
+    letter-spacing: 1px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-
+ 
   .time .sep{
     color: var(--accent);
     animation: blink 1s steps(1) infinite;
   }
-
+ 
   .seconds{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
-    font-size: 2.4vw;
+    font-size: 2.1vw;
     color: var(--accent);
     align-self:flex-end;
     margin-bottom: 0.6vw;
     min-width: 2.4ch;
     text-align:left;
   }
-
+ 
   .date{
-    font-size: 1.5vw;
+    font-size: 1.3vw;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     margin-top: 2px;
   }
-
+ 
   .bar{
     width: 100%;
     height: 4px;
-    background: #1c2230;
+    background: var(--border);
     border-radius: 2px;
-    margin-top: 10px;
+    margin-top: 8px;
     overflow: hidden;
   }
   .bar-fill{
@@ -84,14 +86,14 @@
     width: 0%;
     transition: width 1s linear;
   }
-
+ 
   @keyframes blink{
-    50% { opacity: 0.2; }
+    50% { opacity: 0.25; }
   }
 </style>
 </head>
 <body>
-
+ 
   <div class="clock-wrap">
     <div class="time-row">
       <div class="time" id="hhmm">--<span class="sep">:</span>--</div>
@@ -100,14 +102,14 @@
     <div class="date" id="date">-</div>
     <div class="bar"><div class="bar-fill" id="barFill"></div></div>
   </div>
-
+ 
 <script>
   const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
                  'Agustus','September','Oktober','November','Desember'];
-
+ 
   function pad(n){ return n.toString().padStart(2,'0'); }
-
+ 
   function tick(){
     const now = new Date();
     document.getElementById('hhmm').innerHTML =
@@ -117,10 +119,10 @@
       hari[now.getDay()] + ', ' + now.getDate() + ' ' + bulan[now.getMonth()] + ' ' + now.getFullYear();
     document.getElementById('barFill').style.width = (now.getSeconds()/59*100) + '%';
   }
-
+ 
   tick();
   setInterval(tick, 1000);
 </script>
-
+ 
 </body>
 </html>
