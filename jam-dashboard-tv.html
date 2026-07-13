@@ -17,34 +17,33 @@
   }
  
   html, body{
-    margin:0; padding:0;
-    width:100%; height:100%;
+    margin:0; padding:0; height:100%; width:100%;
     background: transparent;
+    display:flex; align-items:center; justify-content:center;
     overflow:hidden;
     font-family:'Space Grotesk', sans-serif;
   }
  
-  .clock-bar{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: 3vw;
-    width:100%;
-    height:100%;
+  .clock-wrap{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 3px;
+    width: 100%; height: 100%;
+    padding: 6px 4%;
     box-sizing: border-box;
-    padding: 0 3vw;
+    border-radius: 10px;
     background: var(--panel);
     border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(31,42,68,0.06);
   }
  
   .time-row{
-    display:flex; align-items:baseline; gap: 0.6vw;
+    display:flex; align-items:baseline; gap: 2%;
   }
  
   .time{
     font-family:'IBM Plex Mono', monospace;
     font-weight:700;
-    font-size: 10vw;
+    font-size: 24vw;
     line-height:1;
     color: var(--navy);
     letter-spacing: 1px;
@@ -59,42 +58,32 @@
  
   .seconds{
     font-family:'IBM Plex Mono', monospace;
-    font-weight:600;
-    font-size: 1.8vw;
+    font-weight:700;
+    font-size: 8vw;
     color: var(--accent);
     align-self:flex-end;
-    margin-bottom: 0.5vw;
-    min-width: 2.2ch;
+    margin-bottom: 2vw;
+    min-width: 2ch;
     text-align:left;
   }
  
-  .divider{
-    width:1px;
-    height: 50%;
-    background: var(--border);
-    flex: 0 0 auto;
-  }
- 
-  .date-col{
-    display:flex; flex-direction:column; gap:6px;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
- 
   .date{
-    font-size: 1.3vw;
+    font-size: 4vw;
+    font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    text-align: center;
     white-space: nowrap;
   }
  
   .bar{
-    width: 100%;
-    max-width: 260px;
-    height: 4px;
+    width: 90%;
+    height: 5px;
     background: var(--border);
-    border-radius: 2px;
+    border-radius: 3px;
+    margin-top: 6px;
     overflow: hidden;
   }
   .bar-fill{
@@ -111,16 +100,13 @@
 </head>
 <body>
  
-  <div class="clock-bar">
+  <div class="clock-wrap">
     <div class="time-row">
       <div class="time" id="hhmm">--<span class="sep">:</span>--</div>
       <div class="seconds" id="ss">--</div>
     </div>
-    <div class="divider"></div>
-    <div class="date-col">
-      <div class="date" id="date">-</div>
-      <div class="bar"><div class="bar-fill" id="barFill"></div></div>
-    </div>
+    <div class="date" id="date">-</div>
+    <div class="bar"><div class="bar-fill" id="barFill"></div></div>
   </div>
  
 <script>
