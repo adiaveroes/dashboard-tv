@@ -2,15 +2,38 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Rotasi Dashboard TV</title>
+<title>Rotasi Dashboard TV + Ticker</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+ 
+  :root{
+    --panel: #ffffff;
+    --accent: #e8720c;
+    --navy: #1f2a44;
+    --border: #e4e7ee;
+  }
+ 
   html, body{
     margin:0; padding:0;
     width:100%; height:100%;
     overflow:hidden;
     background:#ffffff;
+    font-family:'Space Grotesk', sans-serif;
   }
-
+ 
+  /* ==== Area slide Looker Studio (dikurangi tinggi ticker di bawah) ==== */
+  .slide-area{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height: 100%;
+    transition: height 0.3s ease;
+  }
+ 
+  .slide-area.with-ticker{
+    height: calc(100% - 64px);
+  }
+ 
   .slide{
     position:absolute;
     top:0; left:0;
@@ -19,47 +42,165 @@
     visibility:hidden;
     transition: opacity 0.4s ease;
   }
-
+ 
   .slide.active{
     opacity:1;
     visibility:visible;
   }
-
+ 
   iframe{
     width:100%; height:100%;
     border:none;
   }
+ 
+  /* ==== Ticker overlay tetap di bawah, TIDAK nested di dalam Looker Studio ==== */
+  .ticker-bar{
+    position:absolute;
+    left:0; bottom:0;
+    width:100%;
+    height:64px;
+    display:flex;
+    align-items:center;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    box-sizing: border-box;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+  }
+ 
+  .ticker-bar.hidden{
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+ 
+  .tag{
+    flex: 0 0 auto;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    height:100%;
+    padding: 0 3vw;
+    background: var(--accent);
+    color: #ffffff;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size: clamp(14px, 1.6vw, 22px);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 100%, 0 100%);
+    padding-right: calc(3vw + 18px);
+  }
+ 
+  .dot{
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+ 
+  @keyframes pulse{
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+  }
+ 
+  .ticker-viewport{
+    flex: 1 1 auto;
+    overflow: hidden;
+    height: 100%;
+    display:flex;
+    align-items:center;
+    position: relative;
+  }
+ 
+  .ticker-track{
+    display:flex;
+    align-items:center;
+    white-space: nowrap;
+    animation: scroll-left 22s linear infinite;
+  }
+ 
+  .ticker-track span{
+    font-size: clamp(16px, 2vw, 28px);
+    color: var(--navy);
+    padding: 0 4vw;
+    white-space: nowrap;
+  }
+ 
+  .ticker-track span b{
+    color: var(--accent);
+    font-weight: 700;
+  }
+ 
+  @keyframes scroll-left{
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 </style>
 </head>
 <body>
-
-  <!-- Halaman 1: SDM -->
-  <div class="slide active" id="slide0">
-    <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d"></iframe>
+ 
+  <div class="slide-area" id="slideArea">
+    <!-- Halaman 1: SDM (index 0) -->
+    <div class="slide active" id="slide0">
+      <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d"></iframe>
+    </div>
+ 
+    <!-- Halaman 2: Dashboard Anggaran (index 1) -->
+    <div class="slide" id="slide1">
+      <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d"></iframe>
+    </div>
   </div>
-
-  <!-- Halaman 2: Dashboard Anggaran -->
-  <div class="slide" id="slide1">
-    <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d"></iframe>
+ 
+  <!-- Ticker hanya tampil saat halaman Dashboard Anggaran (index 1) aktif -->
+  <div class="ticker-bar hidden" id="tickerBar">
+    <div class="tag">
+      <span class="dot"></span>
+      Pengumuman
+    </div>
+    <div class="ticker-viewport">
+      <div class="ticker-track" id="track"></div>
+    </div>
   </div>
-
+ 
 <script>
-  // Durasi tampil tiap halaman, dalam MILIDETIK (1000 = 1 detik)
-  // Urutan harus sama dengan urutan slide0 (SDM), slide1 (Anggaran) di atas
+  // ---- Rotasi slide Looker Studio ----
   const durasi = [5000, 10000]; // Halaman 1 (SDM): 5 dtk, Halaman 2 (Anggaran): 10 dtk
-
+  const HALAMAN_DENGAN_TICKER = 1; // index halaman Dashboard Anggaran
+ 
   const slides = document.querySelectorAll('.slide');
+  const slideArea = document.getElementById('slideArea');
+  const tickerBar = document.getElementById('tickerBar');
   let current = 0;
-
+ 
+  function updateTicker(index){
+    if(index === HALAMAN_DENGAN_TICKER){
+      tickerBar.classList.remove('hidden');
+      slideArea.classList.add('with-ticker');
+    } else {
+      tickerBar.classList.add('hidden');
+      slideArea.classList.remove('with-ticker');
+    }
+  }
+ 
   function nextSlide(){
     slides[current].classList.remove('active');
     current = (current + 1) % slides.length;
     slides[current].classList.add('active');
+    updateTicker(current);
     setTimeout(nextSlide, durasi[current]);
   }
-
+ 
+  updateTicker(current); // set kondisi awal (halaman SDM, ticker disembunyikan)
   setTimeout(nextSlide, durasi[current]);
+ 
+  // ---- Ticker teks berjalan ----
+  const pesan = 'Terima kasih kepada Tim yang berhasil <b>Juara 1, 2, dan 3</b> — Pertahankan! ' +
+                'Dan untuk Tim lain, agar segera dioptimalkan. <span style="color:#8a93a6;font-size:0.7em">&#9679;&#9679;&#9679;</span>';
+  const track = document.getElementById('track');
+  track.innerHTML = '<span>' + pesan + '</span><span>' + pesan + '</span>';
 </script>
-
+ 
 </body>
 </html>
