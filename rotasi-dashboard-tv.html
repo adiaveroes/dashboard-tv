@@ -52,16 +52,23 @@
     display: block;
   }
 
-  /* Styling Ticker / Running Text di Luar Iframe */
+  /* Styling Ticker / Pengumuman di Luar Iframe */
   .ticker-bar {
-    height: 45px;
-    background-color: #ea580c; /* Warna oranye agar mencolok seperti contoh */
+    height: 0px; /* Default disembunyikan di halaman SDM */
+    background-color: #ea580c; /* Warna oranye agar mencolok */
     color: #ffffff;
     display: flex;
     align-items: center;
     overflow: hidden;
     white-space: nowrap;
     position: relative;
+    border-top: 0px solid #c2410c;
+    transition: height 0.3s ease, border-top 0.3s ease;
+  }
+
+  /* Kelas aktif khusus saat Ticker ingin dimunculkan di halaman Anggaran */
+  .ticker-bar.show {
+    height: 45px;
     border-top: 2px solid #c2410c;
   }
 
@@ -99,19 +106,19 @@
   <div class="main-wrapper">
     <!-- Container untuk Slide Looker Studio -->
     <div class="slides-container">
-      <!-- Halaman 1: SDM -->
+      <!-- Halaman 1: SDM (index 0) - Ticker TIDAK MUNCUL -->
       <div class="slide active" id="slide0">
         <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
       </div>
      
-      <!-- Halaman 2: Dashboard Anggaran -->
+      <!-- Halaman 2: Dashboard Anggaran (index 1) - Ticker MUNCUL -->
       <div class="slide" id="slide1">
         <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d?ui=false"></iframe>
       </div>
     </div>
 
-    <!-- Ticker / Pengumuman di Bagian Bawah (Aman, tidak terpengaruh iframe) -->
-    <div class="ticker-bar">
+    <!-- Ticker / Pengumuman di Bagian Bawah -->
+    <div class="ticker-bar" id="tickerBar">
       <div class="ticker-label">📢 PENGUMUMAN</div>
       <div class="ticker-content">
         Selamat datang di pemantauan eksekutif — Menyampaikan Terima kasih kepada Tim yang berhasil meraih Juara 1, 2, dan 3 — Pertahankan kinerja terbaik Anda! • Harap perbarui data secara berkala.
@@ -120,23 +127,49 @@
   </div>
 
 <script>
-  // Durasi tampil tiap halaman dalam milidetik 
-  // Halaman 1 (SDM): 10 detik (10000), Halaman 2 (Anggaran): 5 detik (5000)
-  const durasi = [10000, 5000]; 
+  // Konfigurasi Halaman & Durasi (dalam milidetik) beserta status Ticker
+  // Indeks 0 (SDM): 10 detik, showTicker: false
+  // Indeks 1 (Dashboard Anggaran): 5 detik, showTicker: true
+  const pages = [
+    { duration: 10000, showTicker: false }, 
+    { duration: 5000,  showTicker: true  }  
+  ]; 
  
   const slides = document.querySelectorAll('.slide');
+  const tickerBar = document.getElementById('tickerBar');
   let current = 0;
+  let timer = null;
  
-  function nextSlide(){
+  function rotatePage() {
+    // Sembunyikan slide aktif saat ini
     slides[current].classList.remove('active');
+    
+    // Pindah ke indeks slide berikutnya
     current = (current + 1) % slides.length;
+    
+    // Tampilkan slide baru
     slides[current].classList.add('active');
     
-    setTimeout(nextSlide, durasi[current]);
+    // Atur visibilitas ticker berdasarkan konfigurasi halaman aktif
+    if (pages[current].showTicker) {
+      tickerBar.classList.add('show');
+    } else {
+      tickerBar.classList.remove('show');
+    }
+    
+    // Jadwalkan rotasi berikutnya sesuai durasi halaman tersebut
+    timer = setTimeout(rotatePage, pages[current].duration);
   }
  
-  // Mulai perputaran slide
-  setTimeout(nextSlide, durasi[current]);
+  // Inisialisasi status ticker awal saat halaman pertama kali dibuka
+  if (pages[current].showTicker) {
+    tickerBar.classList.add('show');
+  } else {
+    tickerBar.classList.remove('show');
+  }
+
+  // Mulai timer perpindahan pertama
+  timer = setTimeout(rotatePage, pages[current].duration);
 </script>
 
 </body>
