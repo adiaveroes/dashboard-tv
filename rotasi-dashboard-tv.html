@@ -25,9 +25,11 @@
 
   .slides-container {
     position: relative;
-    flex: 1; /* Mengisi sisa ruang layar bagian atas */
+    flex: 1; /* Mengisi sisa ruang layar bagian atas secara fleksibel */
     width: 100%;
+    height: 100%;
     background: #000;
+    overflow: hidden; /* Mencegah munculnya scrollbar bawaan */
   }
 
   .slide {
@@ -50,12 +52,14 @@
     height: 100%;
     border: none;
     display: block;
+    /* Memastikan iframe pas dan tidak bisa di-scroll manual */
+    overflow: hidden; 
   }
 
   /* Styling Ticker / Pengumuman di Luar Iframe */
   .ticker-bar {
-    height: 0px; /* Default disembunyikan di halaman SDM */
-    background-color: #ea580c; /* Warna oranye agar mencolok */
+    height: 0px; /* Default disembunyikan */
+    background-color: #ea580c; 
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -64,9 +68,10 @@
     position: relative;
     border-top: 0px solid #c2410c;
     transition: height 0.3s ease, border-top 0.3s ease;
+    flex-shrink: 0;
   }
 
-  /* Kelas aktif khusus saat Ticker ingin dimunculkan di halaman Anggaran */
+  /* Kelas aktif khusus saat Ticker dimunculkan */
   .ticker-bar.show {
     height: 45px;
     border-top: 2px solid #c2410c;
@@ -106,14 +111,14 @@
   <div class="main-wrapper">
     <!-- Container untuk Slide Looker Studio -->
     <div class="slides-container">
-      <!-- Halaman 1: SDM (index 0) - Ticker TIDAK MUNCUL -->
+      <!-- Halaman 1: SDM (Ditambahkan &s=true agar otomatis fit screen) -->
       <div class="slide active" id="slide0">
-        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
+        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false&s=true"></iframe>
       </div>
      
-      <!-- Halaman 2: Dashboard Anggaran (index 1) - Ticker MUNCUL -->
+      <!-- Halaman 2: Dashboard Anggaran (Ditambahkan &s=true agar otomatis fit screen) -->
       <div class="slide" id="slide1">
-        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d?ui=false"></iframe>
+        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d?ui=false&s=true"></iframe>
       </div>
     </div>
 
@@ -127,12 +132,10 @@
   </div>
 
 <script>
-  // Konfigurasi Halaman & Durasi (dalam milidetik) beserta status Ticker
-  // Indeks 0 (SDM): 10 detik, showTicker: false
-  // Indeks 1 (Dashboard Anggaran): 5 detik, showTicker: true
+  // Konfigurasi Halaman & Durasi (dalam milidetik)
   const pages = [
-    { duration: 10000, showTicker: false }, 
-    { duration: 5000,  showTicker: true  }  
+    { duration: 10000, showTicker: false }, // Halaman 1 (SDM): 10 detik, Ticker disembunyikan
+    { duration: 5000,  showTicker: true  }  // Halaman 2 (Anggaran): 5 detik, Ticker dimunculkan
   ]; 
  
   const slides = document.querySelectorAll('.slide');
@@ -141,34 +144,25 @@
   let timer = null;
  
   function rotatePage() {
-    // Sembunyikan slide aktif saat ini
     slides[current].classList.remove('active');
-    
-    // Pindah ke indeks slide berikutnya
     current = (current + 1) % slides.length;
-    
-    // Tampilkan slide baru
     slides[current].classList.add('active');
     
-    // Atur visibilitas ticker berdasarkan konfigurasi halaman aktif
     if (pages[current].showTicker) {
       tickerBar.classList.add('show');
     } else {
       tickerBar.classList.remove('show');
     }
     
-    // Jadwalkan rotasi berikutnya sesuai durasi halaman tersebut
     timer = setTimeout(rotatePage, pages[current].duration);
   }
  
-  // Inisialisasi status ticker awal saat halaman pertama kali dibuka
   if (pages[current].showTicker) {
     tickerBar.classList.add('show');
   } else {
     tickerBar.classList.remove('show');
   }
 
-  // Mulai timer perpindahan pertama
   timer = setTimeout(rotatePage, pages[current].duration);
 </script>
 
