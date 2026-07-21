@@ -15,7 +15,6 @@
     font-family: Arial, sans-serif;
   }
   
-  /* Layout utama: Dibagi jadi area laporan di atas dan ticker di bawah */
   .main-wrapper {
     display: flex;
     flex-direction: column;
@@ -25,11 +24,10 @@
 
   .slides-container {
     position: relative;
-    flex: 1; /* Mengisi sisa ruang layar bagian atas secara fleksibel */
+    flex: 1; 
     width: 100%;
-    height: 100%;
     background: #000;
-    overflow: hidden; /* Mencegah munculnya scrollbar bawaan */
+    overflow: hidden;
   }
 
   .slide {
@@ -47,18 +45,26 @@
     visibility: visible;
   }
   
+  /* Membungkus iframe dengan teknik skala agar pas dan tidak perlu scroll */
+  .iframe-wrapper {
+    width: 1920px;  /* Sesuaikan dengan Lebar Kanvas Looker Studio Anda */
+    height: 1080px; /* Sesuaikan dengan Tinggi Kanvas Looker Studio Anda */
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
   iframe {
     width: 100%;
     height: 100%;
     border: none;
     display: block;
-    /* Memastikan iframe pas dan tidak bisa di-scroll manual */
-    overflow: hidden; 
   }
 
   /* Styling Ticker / Pengumuman di Luar Iframe */
   .ticker-bar {
-    height: 0px; /* Default disembunyikan */
+    height: 0px; 
     background-color: #ea580c; 
     color: #ffffff;
     display: flex;
@@ -69,9 +75,9 @@
     border-top: 0px solid #c2410c;
     transition: height 0.3s ease, border-top 0.3s ease;
     flex-shrink: 0;
+    z-index: 99;
   }
 
-  /* Kelas aktif khusus saat Ticker dimunculkan */
   .ticker-bar.show {
     height: 45px;
     border-top: 2px solid #c2410c;
@@ -89,7 +95,6 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     flex-shrink: 0;
-    z-index: 5;
   }
 
   .ticker-content {
@@ -110,15 +115,19 @@
 
   <div class="main-wrapper">
     <!-- Container untuk Slide Looker Studio -->
-    <div class="slides-container">
-      <!-- Halaman 1: SDM (Ditambahkan &s=true agar otomatis fit screen) -->
+    <div class="slides-container" id="slidesContainer">
+      <!-- Halaman 1: SDM -->
       <div class="slide active" id="slide0">
-        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false&s=true"></iframe>
+        <div class="iframe-wrapper" id="scaleWrapper0">
+          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
+        </div>
       </div>
      
-      <!-- Halaman 2: Dashboard Anggaran (Ditambahkan &s=true agar otomatis fit screen) -->
+      <!-- Halaman 2: Dashboard Anggaran -->
       <div class="slide" id="slide1">
-        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d?ui=false&s=true"></iframe>
+        <div class="iframe-wrapper" id="scaleWrapper1">
+          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d?ui=false"></iframe>
+        </div>
       </div>
     </div>
 
@@ -132,7 +141,29 @@
   </div>
 
 <script>
-  // Konfigurasi Halaman & Durasi (dalam milidetik)
+  // Fungsi otomatis untuk menghitung skala ukuran agar pas dengan layar (Fit to Screen)
+  function adjustScale() {
+    const container = document.getElementById('slidesContainer');
+    const cWidth = container.clientWidth;
+    const cHeight = container.clientHeight;
+
+    // Resolusi dasar kanvas Looker Studio Anda (Ubah jika desain Anda menggunakan ukuran lain, misal 1366x768)
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+
+    const scaleX = cWidth / baseWidth;
+    const scaleY = cHeight / baseHeight;
+
+    // Terapkan skala ke semua wrapper iframe
+    document.querySelectorAll('.iframe-wrapper').forEach(el => {
+      el.style.transform = `scale(${scaleX}, ${scaleY})`;
+    });
+  }
+
+  window.addEventListener('resize', adjustScale);
+  window.addEventListener('load', adjustScale);
+
+  // Konfigurasi Halaman & Durasi Rotasi (dalam milidetik)
   const pages = [
     { duration: 10000, showTicker: false }, // Halaman 1 (SDM): 10 detik, Ticker disembunyikan
     { duration: 5000,  showTicker: true  }  // Halaman 2 (Anggaran): 5 detik, Ticker dimunculkan
@@ -148,6 +179,9 @@
     current = (current + 1) % slides.length;
     slides[current].classList.add('active');
     
+    // Panggil ulang penyesuaian skala saat slide berganti
+    adjustScale();
+
     if (pages[current].showTicker) {
       tickerBar.classList.add('show');
     } else {
