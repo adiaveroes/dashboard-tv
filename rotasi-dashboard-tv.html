@@ -47,8 +47,8 @@
   
   /* Membungkus iframe dengan teknik skala agar pas dan tidak perlu scroll */
   .iframe-wrapper {
-    width: 1366px;  /* Sesuai ukuran kanvas asli Looker Studio Anda */
-    height: 768px;  /* Sesuai ukuran kanvas asli Looker Studio Anda */
+    width: 1366px;  /* Sesuaikan dengan Lebar Kanvas Looker Studio Anda */
+    height: 768px; /* Sesuaikan dengan Tinggi Kanvas Looker Studio Anda */
     transform-origin: top left;
     position: absolute;
     top: 0;
@@ -141,30 +141,22 @@
   </div>
 
 <script>
-  // Resolusi dasar kanvas Looker Studio Anda (dari Current Page Settings)
-  // Kalau nanti halaman SDM ternyata beda ukuran, ubah objek CANVAS_SIZES di bawah
-  const CANVAS_SIZES = {
-    slide0: { width: 1366, height: 768 }, // SDM
-    slide1: { width: 1366, height: 768 }  // Dashboard Anggaran
-  };
-
   // Fungsi otomatis untuk menghitung skala ukuran agar pas dengan layar (Fit to Screen)
   function adjustScale() {
     const container = document.getElementById('slidesContainer');
     const cWidth = container.clientWidth;
     const cHeight = container.clientHeight;
 
-    Object.keys(CANVAS_SIZES).forEach(slideId => {
-      const wrapper = document.getElementById('scaleWrapper' + slideId.replace('slide', ''));
-      if (!wrapper) return;
-      const { width: baseWidth, height: baseHeight } = CANVAS_SIZES[slideId];
+    // Resolusi dasar kanvas Looker Studio Anda (Ubah jika desain Anda menggunakan ukuran lain, misal 1366x768)
+    const baseWidth = 1366;
+    const baseHeight = 768;
 
-      wrapper.style.width = baseWidth + 'px';
-      wrapper.style.height = baseHeight + 'px';
+    const scaleX = cWidth / baseWidth;
+    const scaleY = cHeight / baseHeight;
 
-      const scaleX = cWidth / baseWidth;
-      const scaleY = cHeight / baseHeight;
-      wrapper.style.transform = `scale(${scaleX}, ${scaleY})`;
+    // Terapkan skala ke semua wrapper iframe
+    document.querySelectorAll('.iframe-wrapper').forEach(el => {
+      el.style.transform = `scale(${scaleX}, ${scaleY})`;
     });
   }
 
@@ -205,8 +197,6 @@
     tickerBar.classList.remove('show');
   }
 
-  // Panggil sekali di awal untuk set ukuran & skala sebelum load event
-  adjustScale();
   timer = setTimeout(rotatePage, pages[current].duration);
 </script>
 
