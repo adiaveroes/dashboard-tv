@@ -2,9 +2,10 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rotasi Dashboard TV</title>
 <style>
-  html, body{
+  html, body {
     margin: 0; 
     padding: 0;
     width: 100%; 
@@ -12,80 +13,62 @@
     overflow: hidden;
     background: #000000;
   }
-
-  /* Layout utama membagi layar menjadi area laporan dan sisa untuk bawah */
-  .container {
-    display: flex;
-    flex-direction: column;
-    width: 100vw;
-    height: 100vh;
-  }
-
-  .slide-container {
-    position: relative;
-    flex: 1; /* Mengisi seluruh sisa ruang layar */
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .slide{
+  
+  .slide {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.5s ease-in-out;
   }
-
-  .slide.active{
+  
+  .slide.active {
     opacity: 1;
     visibility: visible;
   }
-
-  iframe{
-    width: 100%; 
+  
+  iframe {
+    width: 100%;
     height: 100%;
     border: none;
+    display: block;
   }
 </style>
 </head>
 <body>
-
-  <div class="container">
-    <!-- Area Slide Iframe Looker Studio -->
-    <div class="slide-container">
-      <!-- Halaman 1: SDM -->
-      <div class="slide active" id="slide0">
-        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d"></iframe>
-      </div>
-    
-      <!-- Halaman 2: Dashboard Anggaran -->
-      <div class="slide" id="slide1">
-        <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d"></iframe>
-      </div>
-    </div>
+  
+  <!-- Halaman 1: SDM (ditambah parameter &ui=false agar bersih & full) -->
+  <div class="slide active" id="slide0">
+    <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
   </div>
-
+ 
+  <!-- Halaman 2: Dashboard Anggaran (ticker internal Anda akan tampil utuh di sini) -->
+  <div class="slide" id="slide1">
+    <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_b43q8v4c5d?ui=false"></iframe>
+  </div>
+ 
 <script>
-  // Durasi tampil tiap halaman, dalam MILIDETIK (1000 = 1 detik)
-  // Indeks 0 (SDM): 10 detik, Indeks 1 (Anggaran): 5 detik sesuai permintaan awal Anda
+  // Durasi tampil tiap halaman dalam milidetik 
+  // Halaman 1 (SDM): 10 detik (10000), Halaman 2 (Anggaran): 5 detik (5000)
   const durasi = [10000, 5000]; 
-
+ 
   const slides = document.querySelectorAll('.slide');
   let current = 0;
-
+ 
   function nextSlide(){
     slides[current].classList.remove('active');
     current = (current + 1) % slides.length;
     slides[current].classList.add('active');
     
-    // Gunakan durasi berdasarkan slide yang *sedang* tampil berikutnya
     setTimeout(nextSlide, durasi[current]);
   }
-
-  // Panggil timer pertama kali berdasarkan durasi slide aktif awal
+ 
+  // Mulai perputaran slide
   setTimeout(nextSlide, durasi[current]);
 </script>
-  
+ 
 </body>
 </html>
