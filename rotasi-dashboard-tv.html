@@ -65,9 +65,8 @@
   /* Styling Ticker / Pengumuman di Luar Iframe */
   .ticker-bar {
     position: absolute;
-    left: 0; bottom: 0;
+    left: 0;
     width: 100%;
-    height: 45px;
     background-color: #ea580c; 
     color: #ffffff;
     display: flex;
@@ -77,6 +76,19 @@
     border-top: 2px solid #c2410c;
     box-sizing: border-box;
     z-index: 99;
+    transition: bottom 0.2s ease, height 0.2s ease;
+  }
+
+  /* Halaman SDM: diturunkan penuh ke bawah + diperkecil, supaya axis chart tidak tertutup */
+  .ticker-bar.page-sdm {
+    bottom: 0;
+    height: 30px;
+  }
+
+  /* Halaman Anggaran: dinaikkan sedikit, supaya menutup batas ticker native yang ada di dalam report */
+  .ticker-bar.page-anggaran {
+    bottom: 10px;
+    height: 45px;
   }
 
   .ticker-label {
@@ -124,8 +136,8 @@
   /* Jam eksternal, muncul bersamaan dengan ticker (hanya saat halaman Anggaran) */
   .jam-box {
     position: absolute;
-    bottom: 61px; /* pas di atas ticker-bar (45px) + border 2px + jarak */
-    right: 16px;
+    bottom: 65px; /* menyesuaikan posisi ticker-bar halaman Anggaran yang baru (bottom:10 + height:45) */
+    right: 48px;  /* digeser lebih ke kiri, menutupi batas kotak jam native di report */
     width: 220px;
     height: 0px;
     overflow: hidden;
@@ -238,15 +250,21 @@
   };
 
   // Fungsi otomatis untuk menghitung skala ukuran agar pas dengan layar (Fit to Screen)
+  // Tiap slide punya reserveBottom sendiri (lihat objek "pages" di bawah), supaya
+  // halaman yang tidak ingin ticker menimpa kontennya bisa disusutkan sedikit ke atas.
   function adjustScale() {
     const container = document.getElementById('slidesContainer');
     const cWidth = container.clientWidth;
-    const cHeight = container.clientHeight;
+    const cHeightFull = container.clientHeight;
 
     Object.keys(CANVAS_SIZES).forEach(slideId => {
-      const wrapper = document.getElementById('scaleWrapper' + slideId.replace('slide', ''));
+      const idx = parseInt(slideId.replace('slide', ''), 10);
+      const wrapper = document.getElementById('scaleWrapper' + idx);
       if (!wrapper) return;
       const { width: baseWidth, height: baseHeight } = CANVAS_SIZES[slideId];
+      const reserveBottomPx = (pages[idx] && pages[idx].reserveBottom) || 0;
+
+      const cHeight = cHeightFull - reserveBottomPx;
 
       wrapper.style.width = baseWidth + 'px';
       wrapper.style.height = baseHeight + 'px';
@@ -265,13 +283,17 @@
     {
       duration: 10000,
       ticker: 'Tetap jaga kesehatan dan tetap semangat bekerja kepada seluruh pegawai Dit. P2D',
-      showJam: false
+      showJam: false,
+      cssClass: 'page-sdm',
+      reserveBottom: 34   // sisakan ruang asli di bawah kanvas SDM, supaya axis chart tidak ketiban ticker
     }, // Halaman 1 (SDM): 10 detik, ticker kesehatan, tanpa jam
     {
-      duration: 5000,
+      duration: 15000,
       ticker: 'Terima kasih kepada Tim yang berhasil <b>Juara 1, 2, dan 3</b> — Pertahankan! Dan untuk Tim lain, agar segera dioptimalkan.',
-      showJam: true
-    }  // Halaman 2 (Anggaran): 5 detik, ticker apresiasi + jam
+      showJam: true,
+      cssClass: 'page-anggaran',
+      reserveBottom: 0    // Anggaran: ticker & jam sengaja overlay menimpa elemen native di report
+    }  // Halaman 2 (Anggaran): 15 detik, ticker apresiasi + jam
   ];
  
   const slides = document.querySelectorAll('.slide');
@@ -285,7 +307,9 @@
   function setTickerForPage(pageIndex){
     const page = pages[pageIndex];
 
-    // Ticker selalu tampil (kedua halaman punya pesan sendiri)
+    // Ticker selalu tampil, tapi posisi/ukurannya beda per halaman
+    tickerBar.classList.remove('page-sdm', 'page-anggaran');
+    tickerBar.classList.add(page.cssClass);
     tickerContent.innerHTML = '<span>' + page.ticker + '</span><span>' + page.ticker + '</span>';
 
     // Jam hanya tampil sesuai flag showJam per halaman
