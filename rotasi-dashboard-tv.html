@@ -16,16 +16,16 @@
   }
   
   .main-wrapper {
-    display: flex;
-    flex-direction: column;
+    position: relative;
     width: 100vw;
     height: 100vh;
   }
 
   .slides-container {
-    position: relative;
-    flex: 1; 
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
     width: 100%;
+    height: 100%;
     background: #000;
     overflow: hidden;
   }
@@ -64,23 +64,19 @@
 
   /* Styling Ticker / Pengumuman di Luar Iframe */
   .ticker-bar {
-    height: 0px; 
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 100%;
+    height: 45px;
     background-color: #ea580c; 
     color: #ffffff;
     display: flex;
     align-items: center;
     overflow: hidden;
     white-space: nowrap;
-    position: relative;
-    border-top: 0px solid #c2410c;
-    transition: height 0.3s ease, border-top 0.3s ease;
-    flex-shrink: 0;
-    z-index: 99;
-  }
-
-  .ticker-bar.show {
-    height: 45px;
     border-top: 2px solid #c2410c;
+    box-sizing: border-box;
+    z-index: 99;
   }
 
   .ticker-label {
@@ -210,7 +206,7 @@
       <!-- Halaman 2: Dashboard Anggaran -->
       <div class="slide" id="slide1">
         <div class="iframe-wrapper" id="scaleWrapper1">
-          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_nn5ugwzk5d=false"></iframe>
+          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_nn5ugwzk5d?ui=false"></iframe>
         </div>
       </div>
     </div>
@@ -290,7 +286,6 @@
     const page = pages[pageIndex];
 
     // Ticker selalu tampil (kedua halaman punya pesan sendiri)
-    tickerBar.classList.add('show');
     tickerContent.innerHTML = '<span>' + page.ticker + '</span><span>' + page.ticker + '</span>';
 
     // Jam hanya tampil sesuai flag showJam per halaman
