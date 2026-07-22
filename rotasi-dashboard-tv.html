@@ -47,8 +47,8 @@
   
   /* Membungkus iframe dengan teknik skala agar pas dan tidak perlu scroll */
   .iframe-wrapper {
-    width: 1366px;  /* Sesuaikan dengan Lebar Kanvas Looker Studio Anda */
-    height: 768px; /* Sesuaikan dengan Tinggi Kanvas Looker Studio Anda */
+    width: 1366px;  /* Sesuai ukuran kanvas asli Looker Studio Anda */
+    height: 768px;  /* Sesuai ukuran kanvas asli Looker Studio Anda */
     transform-origin: top left;
     position: absolute;
     top: 0;
@@ -97,17 +97,101 @@
     flex-shrink: 0;
   }
 
+  .ticker-viewport {
+    flex: 1 1 auto;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
   .ticker-content {
-    display: inline-block;
-    padding-left: 100%;
-    animation: marquee 30s linear infinite;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: marquee 22s linear infinite;
+  }
+
+  .ticker-content span {
     font-size: 16px;
     font-weight: bold;
+    padding-right: 6vw;
+    white-space: nowrap;
   }
 
   @keyframes marquee {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Jam eksternal, muncul bersamaan dengan ticker (hanya saat halaman Anggaran) */
+  .jam-box {
+    position: absolute;
+    bottom: 61px; /* pas di atas ticker-bar (45px) + border 2px + jarak */
+    right: 16px;
+    width: 220px;
+    height: 0px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: #ffffff;
+    border: 1px solid #e4e7ee;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(31,42,68,0.15);
+    box-sizing: border-box;
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.3s ease, height 0.3s ease;
+  }
+
+  .jam-box.show {
+    height: 88px;
+    opacity: 1;
+  }
+
+  .jam-time-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .jam-time {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1;
+    color: #1f2a44;
+    letter-spacing: 1px;
+  }
+
+  .jam-time .sep {
+    color: #e8720c;
+    animation: blinkjam 1s steps(1) infinite;
+  }
+
+  .jam-seconds {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: #e8720c;
+    margin-bottom: 4px;
+  }
+
+  .jam-date {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1f2a44;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  @keyframes blinkjam {
+    50% { opacity: 0.25; }
   }
 </style>
 </head>
@@ -134,29 +218,46 @@
     <!-- Ticker / Pengumuman di Bagian Bawah -->
     <div class="ticker-bar" id="tickerBar">
       <div class="ticker-label">📢 PENGUMUMAN</div>
-      <div class="ticker-content">
-        Selamat datang di pemantauan eksekutif — Menyampaikan Terima kasih kepada Tim yang berhasil meraih Juara 1, 2, dan 3 — Pertahankan kinerja terbaik Anda! • Harap perbarui data secara berkala.
+      <div class="ticker-viewport">
+        <div class="ticker-content" id="tickerContent"></div>
       </div>
+    </div>
+
+    <!-- Jam eksternal -->
+    <div class="jam-box" id="jamBox">
+      <div class="jam-time-row">
+        <div class="jam-time" id="hhmm">--<span class="sep">:</span>--</div>
+        <div class="jam-seconds" id="ss">--</div>
+      </div>
+      <div class="jam-date" id="tanggal">-</div>
     </div>
   </div>
 
 <script>
+  // Resolusi dasar kanvas Looker Studio Anda (dari Current Page Settings)
+  // Kalau nanti halaman SDM ternyata beda ukuran, ubah objek CANVAS_SIZES di bawah
+  const CANVAS_SIZES = {
+    slide0: { width: 1366, height: 768 }, // SDM
+    slide1: { width: 1366, height: 768 }  // Dashboard Anggaran
+  };
+
   // Fungsi otomatis untuk menghitung skala ukuran agar pas dengan layar (Fit to Screen)
   function adjustScale() {
     const container = document.getElementById('slidesContainer');
     const cWidth = container.clientWidth;
     const cHeight = container.clientHeight;
 
-    // Resolusi dasar kanvas Looker Studio Anda (Ubah jika desain Anda menggunakan ukuran lain, misal 1366x768)
-    const baseWidth = 1366;
-    const baseHeight = 768;
+    Object.keys(CANVAS_SIZES).forEach(slideId => {
+      const wrapper = document.getElementById('scaleWrapper' + slideId.replace('slide', ''));
+      if (!wrapper) return;
+      const { width: baseWidth, height: baseHeight } = CANVAS_SIZES[slideId];
 
-    const scaleX = cWidth / baseWidth;
-    const scaleY = cHeight / baseHeight;
+      wrapper.style.width = baseWidth + 'px';
+      wrapper.style.height = baseHeight + 'px';
 
-    // Terapkan skala ke semua wrapper iframe
-    document.querySelectorAll('.iframe-wrapper').forEach(el => {
-      el.style.transform = `scale(${scaleX}, ${scaleY})`;
+      const scaleX = cWidth / baseWidth;
+      const scaleY = cHeight / baseHeight;
+      wrapper.style.transform = `scale(${scaleX}, ${scaleY})`;
     });
   }
 
@@ -165,14 +266,40 @@
 
   // Konfigurasi Halaman & Durasi Rotasi (dalam milidetik)
   const pages = [
-    { duration: 10000, showTicker: false }, // Halaman 1 (SDM): 10 detik, Ticker disembunyikan
-    { duration: 5000,  showTicker: true  }  // Halaman 2 (Anggaran): 5 detik, Ticker dimunculkan
-  ]; 
+    {
+      duration: 10000,
+      ticker: 'Tetap jaga kesehatan dan tetap semangat bekerja kepada seluruh pegawai Dit. P2D',
+      showJam: false
+    }, // Halaman 1 (SDM): 10 detik, ticker kesehatan, tanpa jam
+    {
+      duration: 5000,
+      ticker: 'Terima kasih kepada Tim yang berhasil <b>Juara 1, 2, dan 3</b> — Pertahankan! Dan untuk Tim lain, agar segera dioptimalkan.',
+      showJam: true
+    }  // Halaman 2 (Anggaran): 5 detik, ticker apresiasi + jam
+  ];
  
   const slides = document.querySelectorAll('.slide');
   const tickerBar = document.getElementById('tickerBar');
+  const jamBox = document.getElementById('jamBox');
   let current = 0;
   let timer = null;
+
+  const tickerContent = document.getElementById('tickerContent');
+
+  function setTickerForPage(pageIndex){
+    const page = pages[pageIndex];
+
+    // Ticker selalu tampil (kedua halaman punya pesan sendiri)
+    tickerBar.classList.add('show');
+    tickerContent.innerHTML = '<span>' + page.ticker + '</span><span>' + page.ticker + '</span>';
+
+    // Jam hanya tampil sesuai flag showJam per halaman
+    if(page.showJam){
+      jamBox.classList.add('show');
+    } else {
+      jamBox.classList.remove('show');
+    }
+  }
  
   function rotatePage() {
     slides[current].classList.remove('active');
@@ -182,22 +309,35 @@
     // Panggil ulang penyesuaian skala saat slide berganti
     adjustScale();
 
-    if (pages[current].showTicker) {
-      tickerBar.classList.add('show');
-    } else {
-      tickerBar.classList.remove('show');
-    }
+    setTickerForPage(current);
     
     timer = setTimeout(rotatePage, pages[current].duration);
   }
  
-  if (pages[current].showTicker) {
-    tickerBar.classList.add('show');
-  } else {
-    tickerBar.classList.remove('show');
+  setTickerForPage(current);
+
+  // Panggil sekali di awal untuk set ukuran & skala sebelum load event
+  adjustScale();
+  timer = setTimeout(rotatePage, pages[current].duration);
+
+  // ---- Jam berjalan ----
+  const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
+                 'Agustus','September','Oktober','November','Desember'];
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function tickJam(){
+    const now = new Date();
+    document.getElementById('hhmm').innerHTML =
+      pad(now.getHours()) + '<span class="sep">:</span>' + pad(now.getMinutes());
+    document.getElementById('ss').textContent = pad(now.getSeconds());
+    document.getElementById('tanggal').textContent =
+      hari[now.getDay()] + ', ' + now.getDate() + ' ' + bulan[now.getMonth()] + ' ' + now.getFullYear();
   }
 
-  timer = setTimeout(rotatePage, pages[current].duration);
+  tickJam();
+  setInterval(tickJam, 1000);
 </script>
 
 </body>
