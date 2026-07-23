@@ -91,6 +91,13 @@
     height: 45px;
   }
 
+  /* Halaman tanpa ticker sama sekali */
+  .ticker-bar.page-none {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .ticker-label {
     background-color: #c2410c;
     color: white;
@@ -136,8 +143,8 @@
   /* Jam eksternal, muncul bersamaan dengan ticker (hanya saat halaman Anggaran) */
   .jam-box {
     position: absolute;
-    bottom: 55px; /* menyesuaikan posisi ticker-bar halaman Anggaran yang baru (bottom:10 + height:45) */
-    right: 30px;  /* digeser lebih ke kiri, menutupi batas kotak jam native di report */
+    bottom: 55px; /* digeser sedikit turun dari 65px */
+    right: 30px;  /* digeser sedikit ke kanan dari 48px */
     width: 220px;
     height: 0px;
     overflow: hidden;
@@ -221,6 +228,13 @@
           <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_nn5ugwzk5d?ui=false"></iframe>
         </div>
       </div>
+
+      <!-- Halaman 3: (tanpa ticker) -->
+      <div class="slide" id="slide2">
+        <div class="iframe-wrapper" id="scaleWrapper2">
+          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_1iwehxdr5d?ui=false"></iframe>
+        </div>
+      </div>
     </div>
 
     <!-- Ticker / Pengumuman di Bagian Bawah -->
@@ -246,7 +260,8 @@
   // Kalau nanti halaman SDM ternyata beda ukuran, ubah objek CANVAS_SIZES di bawah
   const CANVAS_SIZES = {
     slide0: { width: 1366, height: 768 }, // SDM
-    slide1: { width: 1366, height: 768 }  // Dashboard Anggaran
+    slide1: { width: 1366, height: 768 }, // Dashboard Anggaran
+    slide2: { width: 1366, height: 768 }  // Halaman 3 (tanpa ticker) — sesuaikan kalau ukurannya beda
   };
 
   // Fungsi otomatis untuk menghitung skala ukuran agar pas dengan layar (Fit to Screen)
@@ -293,7 +308,14 @@
       showJam: true,
       cssClass: 'page-anggaran',
       reserveBottom: 0    // Anggaran: ticker & jam sengaja overlay menimpa elemen native di report
-    }  // Halaman 2 (Anggaran): 15 detik, ticker apresiasi + jam
+    }, // Halaman 2 (Anggaran): 15 detik, ticker apresiasi + jam
+    {
+      duration: 5000,
+      ticker: 'Mohon agar seluruh pegawai tertib pelaporan perjadin dan segera penuhi jamlat.',
+      showJam: false,
+      cssClass: 'page-sdm',
+      reserveBottom: 34   // sama seperti SDM: sisakan ruang asli, supaya konten tidak ketiban ticker
+    }  // Halaman 3: 5 detik, ticker himbauan perjadin/jamlat
   ];
  
   const slides = document.querySelectorAll('.slide');
@@ -307,10 +329,14 @@
   function setTickerForPage(pageIndex){
     const page = pages[pageIndex];
 
-    // Ticker selalu tampil, tapi posisi/ukurannya beda per halaman
-    tickerBar.classList.remove('page-sdm', 'page-anggaran');
+    tickerBar.classList.remove('page-sdm', 'page-anggaran', 'page-none');
     tickerBar.classList.add(page.cssClass);
-    tickerContent.innerHTML = '<span>' + page.ticker + '</span><span>' + page.ticker + '</span>';
+
+    if(page.ticker){
+      tickerContent.innerHTML = '<span>' + page.ticker + '</span><span>' + page.ticker + '</span>';
+    } else {
+      tickerContent.innerHTML = '';
+    }
 
     // Jam hanya tampil sesuai flag showJam per halaman
     if(page.showJam){
