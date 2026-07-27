@@ -218,21 +218,21 @@
       <!-- Halaman 1: SDM -->
       <div class="slide active" id="slide0">
         <div class="iframe-wrapper" id="scaleWrapper0">
-          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
         </div>
       </div>
      
       <!-- Halaman 2: Dashboard Anggaran -->
       <div class="slide" id="slide1">
         <div class="iframe-wrapper" id="scaleWrapper1">
-          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_nn5ugwzk5d?ui=false"></iframe>
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_nn5ugwzk5d?ui=false"></iframe>
         </div>
       </div>
 
       <!-- Halaman 3: (tanpa ticker) -->
       <div class="slide" id="slide2">
         <div class="iframe-wrapper" id="scaleWrapper2">
-          <iframe src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_1iwehxdr5d?ui=false"></iframe>
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_1iwehxdr5d?ui=false"></iframe>
         </div>
       </div>
     </div>
@@ -292,6 +292,15 @@
 
   window.addEventListener('resize', adjustScale);
   window.addEventListener('load', adjustScale);
+
+  // Isi src iframe secara dinamis dengan parameter anti-cache unik,
+  // supaya browser SELALU ambil versi terbaru dan tidak nyangkut di cache lama
+  const cacheBuster = Date.now();
+  document.querySelectorAll('iframe[data-src]').forEach(frame => {
+    const baseSrc = frame.getAttribute('data-src');
+    const sep = baseSrc.includes('?') ? '&' : '?';
+    frame.src = baseSrc + sep + 'cb=' + cacheBuster;
+  });
 
   // Konfigurasi Halaman & Durasi Rotasi (dalam milidetik)
   const pages = [
