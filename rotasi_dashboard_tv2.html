@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotasi Dashboard TV</title>
+<style>
+  html, body {
+    margin: 0; 
+    padding: 0;
+    width: 100%; 
+    height: 100%;
+    overflow: hidden;
+    background: #0f172a;
+    font-family: Arial, sans-serif;
+  }
+  
+  .main-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slides-container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; 
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out;
+  }
+  
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* Membungkus iframe dengan teknik skala agar pas dan tidak perlu scroll */
+  .iframe-wrapper {
+    width: 1366px;  /* Sesuai ukuran kanvas asli Looker Studio Anda */
+    height: 768px;  /* Sesuai ukuran kanvas asli Looker Studio Anda */
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* Styling Ticker / Pengumuman di Luar Iframe */
+  .ticker-bar {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background-color: #ea580c; 
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top: 2px solid #c2410c;
+    box-sizing: border-box;
+    z-index: 99;
+    transition: bottom 0.2s ease, height 0.2s ease;
+  }
+
+  /* Halaman SDM: diturunkan penuh ke bawah + diperkecil, supaya axis chart tidak tertutup */
+  .ticker-bar.page-sdm {
+    bottom: 0;
+    height: 30px;
+  }
+
+  /* Halaman Anggaran: dinaikkan sedikit, supaya menutup batas ticker native yang ada di dalam report */
+  .ticker-bar.page-anggaran {
+    bottom: 10px;
+    height: 45px;
+  }
+
+  /* Halaman tanpa ticker sama sekali */
+  .ticker-bar.page-none {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .ticker-label {
+    background-color: #c2410c;
+    color: white;
+    padding: 0 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .ticker-viewport {
+    flex: 1 1 auto;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .ticker-content {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: marquee 22s linear infinite;
+  }
+
+  .ticker-content span {
+    font-size: 16px;
+    font-weight: bold;
+    padding-right: 6vw;
+    white-space: nowrap;
+  }
+
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Jam eksternal, muncul bersamaan dengan ticker (hanya saat halaman Anggaran) */
+  .jam-box {
+    position: absolute;
+    bottom: 55px;
+    right: 30px; 
+    width: 220px;
+    height: 0px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: #ffffff;
+    border: 1px solid #e4e7ee;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(31,42,68,0.15);
+    box-sizing: border-box;
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.3s ease, height 0.3s ease;
+  }
+
+  .jam-box.show {
+    height: 88px;
+    opacity: 1;
+  }
+
+  .jam-time-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .jam-time {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1;
+    color: #1f2a44;
+    letter-spacing: 1px;
+  }
+
+  .jam-time .sep {
+    color: #e8720c;
+    animation: blinkjam 1s steps(1) infinite;
+  }
+
+  .jam-seconds {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: #e8720c;
+    margin-bottom: 4px;
+  }
+
+  .jam-date {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1f2a44;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  @keyframes blinkjam {
+    50% { opacity: 0.25; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="main-wrapper">
+    <!-- Container untuk Slide Looker Studio -->
+    <div class="slides-container" id="slidesContainer">
+      <!-- Halaman 1: SDM -->
+      <div class="slide active" id="slide0">
+        <div class="iframe-wrapper" id="scaleWrapper0">
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_n0fz80cc5d?ui=false"></iframe>
+        </div>
+      </div>
+     
+      <!-- Halaman 2: Dashboard Anggaran -->
+      <div class="slide" id="slide1">
+        <div class="iframe-wrapper" id="scaleWrapper1">
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_nn5ugwzk5d?ui=false"></iframe>
+        </div>
+      </div>
+
+      <!-- Halaman 3: (tanpa ticker) -->
+      <div class="slide" id="slide2">
+        <div class="iframe-wrapper" id="scaleWrapper2">
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3c8a6bd5-b704-4a07-a1bd-e98fc57fb1ce/page/p_1iwehxdr5d?ui=false"></iframe>
+        </div>
+      </div>
+
+      <!-- Halaman 4: Spektra (Baru ditambahkan) -->
+      <div class="slide" id="slide3">
+        <div class="iframe-wrapper" id="scaleWrapper3">
+          <iframe data-src="https://datastudio.google.com/embed/reporting/3f28b912-22db-4b58-85da-373b0af40af0/page/Q7P9F?ui=false"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticker / Pengumuman di Bagian Bawah -->
+    <div class="ticker-bar" id="tickerBar">
+      <div class="ticker-label">📢 PENGUMUMAN</div>
+      <div class="ticker-viewport">
+        <div class="ticker-content" id="tickerContent"></div>
+      </div>
+    </div>
+
+    <!-- Jam eksternal -->
+    <div class="jam-box" id="jamBox">
+      <div class="jam-time-row">
+        <div class="jam-time" id="hhmm">--<span class="sep">:</span>--</div>
+        <div class="jam-seconds" id="ss">--</div>
+      </div>
+      <div class="jam-date" id="tanggal">-</div>
+    </div>
+  </div>
+
+<script>
+  // Resolusi dasar kanvas Looker Studio Anda
+  const CANVAS_SIZES = {
+    slide0: { width: 1366, height: 768 }, // SDM
+    slide1: { width: 1366, height: 768 }, // Dashboard Anggaran
+    slide2: { width: 1366, height: 768 }, // Halaman 3
+    slide3: { width: 1366, height: 768 }  // Halaman 4 (Spektra)
+  };
+
+  // Fungsi otomatis untuk menghitung skala ukuran agar pas dengan layar (Fit to Screen)
+  function adjustScale() {
+    const container = document.getElementById('slidesContainer');
+    const cWidth = container.clientWidth;
+    const cHeightFull = container.clientHeight;
+
+    Object.keys(CANVAS_SIZES).forEach(slideId => {
+      const idx = parseInt(slideId.replace('slide', ''), 10);
+      const wrapper = document.getElementById('scaleWrapper' + idx);
+      if (!wrapper) return;
+      const { width: baseWidth, height: baseHeight } = CANVAS_SIZES[slideId];
+      const reserveBottomPx = (pages[idx] && pages[idx].reserveBottom) || 0;
+
+      const cHeight = cHeightFull - reserveBottomPx;
+
+      wrapper.style.width = baseWidth + 'px';
+      wrapper.style.height = baseHeight + 'px';
+
+      const scaleX = cWidth / baseWidth;
+      const scaleY = cHeight / baseHeight;
+      wrapper.style.transform = `scale(${scaleX}, ${scaleY})`;
+    });
+  }
+
+  window.addEventListener('resize', adjustScale);
+  window.addEventListener('load', adjustScale);
+
+  // Isi src iframe secara dinamis dengan parameter anti-cache unik
+  const cacheBuster = Date.now();
+  document.querySelectorAll('iframe[data-src]').forEach(frame => {
+    const baseSrc = frame.getAttribute('data-src');
+    const sep = baseSrc.includes('?') ? '&' : '?';
+    frame.src = baseSrc + sep + 'cb=' + cacheBuster;
+  });
+
+  // Konfigurasi Halaman & Durasi Rotasi (dalam milidetik)
+  const pages = [
+    {
+      duration: 10000,
+      ticker: 'Tetap jaga kesehatan dan tetap semangat bekerja kepada seluruh pegawai Dit. P2D',
+      showJam: false,
+      cssClass: 'page-sdm',
+      reserveBottom: 34   
+    }, // Halaman 1 (SDM)
+    {
+      duration: 15000,
+      ticker: 'Terima kasih kepada Tim yang berhasil <b>Juara 1, 2, dan 3</b> — Pertahankan! Dan untuk Tim lain, agar segera dioptimalkan.',
+      showJam: true,
+      cssClass: 'page-anggaran',
+      reserveBottom: 0    
+    }, // Halaman 2 (Anggaran)
+    {
+      duration: 5000,
+      ticker: 'Mohon agar seluruh pegawai tertib pelaporan perjadin dan segera penuhi jamlat.',
+      showJam: false,
+      cssClass: 'page-sdm',
+      reserveBottom: 34   
+    },  // Halaman 3
+    {
+      duration: 35000, // Durasi 35 detik untuk halaman Spektra
+      ticker: '', // Ticker dikosongkan agar tampilan video/dashboard bersih
+      showJam: false, // Menyembunyikan jam
+      cssClass: 'page-none', // Menyembunyikan bar hitam di bawah
+      reserveBottom: 0 
+    }   // Halaman 4 (Spektra)
+  ];
+ 
+  const slides = document.querySelectorAll('.slide');
+  const tickerBar = document.getElementById('tickerBar');
+  const jamBox = document.getElementById('jamBox');
+  let current = 0;
+  let timer = null;
+
+  const tickerContent = document.getElementById('tickerContent');
+
+  function setTickerForPage(pageIndex){
+    const page = pages[pageIndex];
+
+    tickerBar.classList.remove('page-sdm', 'page-anggaran', 'page-none');
+    tickerBar.classList.add(page.cssClass);
+
+    if(page.ticker){
+      tickerContent.innerHTML = '<span>' + page.ticker + '</span><span>' + page.ticker + '</span>';
+    } else {
+      tickerContent.innerHTML = '';
+    }
+
+    if(page.showJam){
+      jamBox.classList.add('show');
+    } else {
+      jamBox.classList.remove('show');
+    }
+  }
+ 
+  function rotatePage() {
+    slides[current].classList.remove('active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('active');
+    
+    adjustScale();
+    setTickerForPage(current);
+    
+    timer = setTimeout(rotatePage, pages[current].duration);
+  }
+ 
+  setTickerForPage(current);
+  adjustScale();
+  timer = setTimeout(rotatePage, pages[current].duration);
+
+  // ---- Jam berjalan ----
+  const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli',
+                 'Agustus','September','Oktober','November','Desember'];
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function tickJam(){
+    const now = new Date();
+    document.getElementById('hhmm').innerHTML =
+      pad(now.getHours()) + '<span class="sep">:</span>' + pad(now.getMinutes());
+    document.getElementById('ss').textContent = pad(now.getSeconds());
+    document.getElementById('tanggal').textContent =
+      hari[now.getDay()] + ', ' + now.getDate() + ' ' + bulan[now.getMonth()] + ' ' + now.getFullYear();
+  }
+
+  tickJam();
+  setInterval(tickJam, 1000);
+</script>
+
+</body>
+</html>
